@@ -1,5 +1,8 @@
+# coding: utf-8
+
 import itertools
 import numpy as np
+import pandas as pd
 import networkx as nx
 
 measures = [
@@ -7,6 +10,43 @@ measures = [
     (nx.closeness_centrality, -1),
     (nx.betweenness_centrality, 1),
 ]
+
+
+def parse_graph(graph_file, distance_threshold=200):
+    dtypes = {
+        'POINT_X': np.float64,
+        'POINT_X': np.float64,
+        'POINT_Z': np.float64}
+    stops = pd.read_excel(graph_file, dtype=dtypes)
+
+    graph = nx.Graph()
+    for i in xrange(stops.shape[0]):
+        node_attrs = {
+            'name': stops['Name_GJCZ'][i],
+            'routes': stops['XL_GJCZ'][i].split(';'),
+            'x': stops['POINT_X'][i],
+            'y': stops['POINT_Y'][i],
+            'z': stops['POINT_Z'][i]
+        }
+        graph.add_node(i, **node_attrs)
+
+    for pair in itertools.combinations(graph.nodes, 2):
+        n0 = graph.nodes[pair[0]]
+        n1 = graph.nodes[pair[1]]
+
+        dist = np.sqrt((n0['x'] - n1['x']) ** 2 + (n0['y'] - n1['y']) ** 2)
+        routes = list(set(n0['routes']) & set(n1['routes']))
+        edge_attrs = {
+            'distance': dist,
+            'routes': routes
+        }
+
+        if dist <= distance_threshold or len(routes) > 0:
+            print(u'Edge: {} and {}, dist: {}, routes: {}'.format(
+                n0['name'], n1['name'], dist, ';'.join(routes)))
+            graph.add_edge(pair[0], pair[1], **edge_attrs)
+
+    return graph
 
 
 def score_nodes(graph, watch_nodes):
@@ -48,9 +88,9 @@ def find_comb(graph, watch_nodes=None, n_combs=2):
 
 
 if __name__ == '__main__':
-    graph = nx.sedgewick_maze_graph()
+    # graph = nx.sedgewick_maze_graph()
     # graph = nx.tutte_graph()
+    graph = parse_graph('stops.xlsx')
 
-    watch_nodes = [0, 2, 3]
-    n_combs = 2
-    find_comb(graph, watch_nodes, n_combs)
+    best_combs, max_diff = find_comb(graph)
+    print(best_combs)    
