@@ -93,4 +93,4 @@ if __name__ == '__main__':
     graph = parse_graph('stops.xlsx')
 
     best_combs, max_diff = find_comb(graph)
-    print(best_combs)    
+    print(best_combs)
