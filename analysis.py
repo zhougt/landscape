@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import os
 import itertools
 import numpy as np
 import pandas as pd
@@ -20,7 +21,7 @@ def parse_graph(graph_file, distance_threshold=200):
     stops = pd.read_excel(graph_file, dtype=dtypes)
 
     graph = nx.Graph()
-    for i in xrange(stops.shape[0]):
+    for i in range(stops.shape[0]):
         node_attrs = {
             'name': stops['Name_GJCZ'][i],
             'routes': stops['XL_GJCZ'][i],
@@ -50,7 +51,8 @@ def parse_graph(graph_file, distance_threshold=200):
                 n0['name'], n1['name'], dist, ';'.join(routes)))
             graph.add_edge(pair[0], pair[1], **edge_attrs)
 
-    nx.write_gexf(graph, 'graph.gexf')
+    save_file = '{}.gexf'.format(os.path.splitext(graph_file)[0])
+    nx.write_gexf(graph, save_file)
 
     return graph
 
